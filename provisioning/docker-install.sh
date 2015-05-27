@@ -63,9 +63,9 @@ main() {
     local kver_required=2632
     echo "Installation log in $LOGFILE"
 
-    is_kernel_more_recent_than $kver_required || handle_old_kernel
-    has_device_mapper || install_device_mapper
-    has_epel || ( install_epel && update_package_cache )
+    ( is_kernel_more_recent_than $kver_required || handle_old_kernel ) && \
+        ( has_device_mapper || install_device_mapper ) && \
+        ( has_epel || ( install_epel && update_package_cache ) )
 }
 
 LOGFILE=/tmp/docker-install.log
