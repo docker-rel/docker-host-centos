@@ -10,9 +10,7 @@ is_kernel_more_recent_than() {
 }
 
 handle_old_kernel() {
-    echo "Kernel version ($(uname -r)) too old. Trying to update."
-    update_packages
-    echo "Packages updated. Try to rerun the provisioning script now."
+    echo "Kernel version ($(uname -r)) too old."
     exit 1
 }
 
@@ -35,8 +33,10 @@ has_device_mapper() {
 }
 
 install_device_mapper() {
+    echo "Installing Device Mapper"
     yum -y install device-mapper
     modprobe dm_mod
+    return $?
 }
 
 has_epel() {
@@ -54,6 +54,7 @@ install_epel() {
 update_package_cache() {
     echo "Updating package cache..."
     yum makecache > $LOGFILE 2>&1
+    return $?
 }
 
 has_docker() {
@@ -68,6 +69,24 @@ install_docker() {
     return $?
 }
 
+is_docker_running() {
+    echo "Checking if Docker is running..."
+    service docker status > $LOGFILE 2>&1
+    return $?
+}
+
+enable_docker() {
+    echo "Enabling Docker daemon..."
+    chkconfig docker on > $LOGFILE 2>&1
+    return $?
+}
+
+start_docker() {
+    echo "Starting Docker daemon..."
+    service docker start > $LOGFILE 2>&1
+    return $?
+}
+
 main() {
     # According to the Docker book, we need the kernel to be 
     # 3.8 or newer. RHEL/CentOS by definition runs on 2.6.x 
@@ -75,12 +94,18 @@ main() {
     local kver_required=2632
     echo "Installation log in $LOGFILE"
 
+    update_packages
+
     has_docker || ( \
         ( is_kernel_more_recent_than $kver_required || handle_old_kernel ) && \
         ( has_device_mapper || install_device_mapper ) && \
         ( has_epel || ( install_epel && update_package_cache ) ) && \
         install_docker \
         )
+
+    is_docker_running || ( enable_docker && start_docker )
+
+    docker info || exit 1
 }
 
 LOGFILE=/tmp/docker-install.log

@@ -16,7 +16,7 @@
   * Install Docker
     * yum -y install docker-io [X]
 * Start the Docker daemon 
-  * Enable the service
-  * Start the service
-  * Confirm that it is running
+  * Enable the service [X]
+  * Start the service [X]
+  * Confirm that it is running [X]
 
