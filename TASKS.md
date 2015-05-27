@@ -7,4 +7,14 @@
   * Create shell script for provisioning [X]
   * Test with vagrant provision [X]
 * Install Docker with shell provisioner
+  * Confirm that we have a 3.8 or later kernel version [?]. Kind of not very
+    smart to install an unsupported kernel in RHEL/CentOS.
+  * Check for Device Mapper [X]
+  * Install Docker
+    * Add EPEL
+    * yum -y install docker-io
+* Start the Docker daemon 
+  * Enable the service
+  * Start the service
+  * Confirm that it is running
 
