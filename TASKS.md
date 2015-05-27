@@ -10,8 +10,10 @@
   * Confirm that we have a 3.8 or later kernel version [?]. Kind of not very
     smart to install an unsupported kernel in RHEL/CentOS.
   * Check for Device Mapper [X]
+  * Add EPEL
+    * Check for EPEL [X]
+    * Install EPEL repo [X]
   * Install Docker
-    * Add EPEL
     * yum -y install docker-io
 * Start the Docker daemon 
   * Enable the service

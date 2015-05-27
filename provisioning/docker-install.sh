@@ -18,8 +18,8 @@ handle_old_kernel() {
 
 update_packages() {
     echo "Updating packages..."
-    yum makecache
-    yum -y update
+    update_package_cache || exit 1
+    yum -y update > $LOGFILE 2>&1
 
     local status=$?
     if [ $status -ne 0 ]; then
@@ -30,7 +30,7 @@ update_packages() {
 
 has_device_mapper() {
     echo "Checking for Device Mapper..."
-    stat /sys/class/misc/device-mapper > /dev/null 2>&1
+    stat /sys/class/misc/device-mapper > $LOGFILE 2>&1
     return $?
 }
 
@@ -39,13 +39,35 @@ install_device_mapper() {
     modprobe dm_mod
 }
 
+has_epel() {
+    echo "Checking for EPEL..."
+    yum repolist | grep '^epel' > $LOGFILE 2>&1
+    return $?
+}
+
+install_epel() {
+    echo "Installing EPEL repo..."
+    local epel_rpm="http://download.fedoraproject.org/pub/epel/6/x86_64/epel-release-6-8.noarch.rpm"
+    rpm -ivh $epel_rpm > $LOGFILE 2>&1
+}
+
+update_package_cache() {
+    echo "Updating package cache..."
+    yum makecache > $LOGFILE 2>&1
+}
+
 main() {
     # According to the Docker book, we need the kernel to be 
     # 3.8 or newer. RHEL/CentOS by definition runs on 2.6.x 
     # kernels so that's not really possible.
     local kver_required=2632
+    echo "Installation log in $LOGFILE"
+
     is_kernel_more_recent_than $kver_required || handle_old_kernel
     has_device_mapper || install_device_mapper
+    has_epel || ( install_epel && update_package_cache )
 }
+
+LOGFILE=/tmp/docker-install.log
 
 main $*
