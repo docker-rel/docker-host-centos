@@ -56,6 +56,18 @@ update_package_cache() {
     yum makecache > $LOGFILE 2>&1
 }
 
+has_docker() {
+    echo "Checking if Docker is installed..."
+    rpm -q docker-io > $LOGFILE 2>&1
+    return $?
+}
+
+install_docker() {
+    echo "Installing Docker..."
+    yum -y install docker-io > $LOGFILE 2>&1
+    return $?
+}
+
 main() {
     # According to the Docker book, we need the kernel to be 
     # 3.8 or newer. RHEL/CentOS by definition runs on 2.6.x 
@@ -63,9 +75,12 @@ main() {
     local kver_required=2632
     echo "Installation log in $LOGFILE"
 
-    ( is_kernel_more_recent_than $kver_required || handle_old_kernel ) && \
+    has_docker || ( \
+        ( is_kernel_more_recent_than $kver_required || handle_old_kernel ) && \
         ( has_device_mapper || install_device_mapper ) && \
-        ( has_epel || ( install_epel && update_package_cache ) )
+        ( has_epel || ( install_epel && update_package_cache ) ) && \
+        install_docker \
+        )
 }
 
 LOGFILE=/tmp/docker-install.log

@@ -14,7 +14,7 @@
     * Check for EPEL [X]
     * Install EPEL repo [X]
   * Install Docker
-    * yum -y install docker-io
+    * yum -y install docker-io [X]
 * Start the Docker daemon 
   * Enable the service
   * Start the service
