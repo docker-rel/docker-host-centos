@@ -1,8 +1,19 @@
+#!/bin/bash
+
+#官方文档要求Linux kernel至少3.8以上，且docker只能运行在64位的系统中。
+#由于RHEL6和CentOS6的内核版本为2.6，因此必须要先升级内核。
+
+disable_selinux() {
+	echo "Disable selinux..."
+	local conf="/etc/selinux/config"
+  	sed -i 's/^SELINUX=.*/SELINUX=disable/' $conf	
+}
+	
 is_kernel_more_recent_than() {
     echo "Checking for supported Kernel version..."
     local v=$(uname -r | cut -d\- -f1 | tr -d '.' | tr -d '[A-Z][a-z]')
     v=${v:0:4}
-    if [ $v -ge $1 ]; then
+    if [ $v -gt $1 ]; then
         return 0;
     else
         return 1;
@@ -14,30 +25,41 @@ handle_old_kernel() {
     exit 1
 }
 
-update_packages() {
-    echo "Updating packages..."
-    update_package_cache || exit 1
-    yum -y update > $LOGFILE 2>&1
+update_new_kernel() {
+	cd /etc/yum.repos.d 
+	wget http://www.hop5.in/yum/el6/hop5.repo
+	yum -y install kernel-ml-aufs kernel-ml-aufs-devel
+	if [ $? -eq 0] ;then
+	sed -i 's/default=.*/default=0/' /etc/grub.conf	
+	echo "pls reboot host....."
+	fi
 
-    local status=$?
-    if [ $status -ne 0 ]; then
-        echo "Fatal: Package update failed"
-        exit 1
-    fi
 }
 
-has_device_mapper() {
-    echo "Checking for Device Mapper..."
-    stat /sys/class/misc/device-mapper > $LOGFILE 2>&1
-    return $?
-}
+#update_packages() {
+#    echo "Updating packages..."
+#    update_package_cache || exit 1
+#    yum -y update > $LOGFILE 2>&1
 
-install_device_mapper() {
-    echo "Installing Device Mapper"
-    yum -y install device-mapper
-    modprobe dm_mod
-    return $?
-}
+#    local status=$?
+#    if [ $status -ne 0 ]; then
+#        echo "Fatal: Package update failed"
+#        exit 1
+#    fi
+#}
+
+#has_device_mapper() {
+#    echo "Checking for Device Mapper..."
+#    stat /sys/class/misc/device-mapper > $LOGFILE 2>&1
+#    return $?
+#}
+
+#install_device_mapper() {
+#    echo "Installing Device Mapper"
+#    yum -y install device-mapper
+#    modprobe dm_mod
+#    return $?
+#}
 
 has_epel() {
     echo "Checking for EPEL..."
@@ -94,11 +116,11 @@ main() {
     local kver_required=2632
     echo "Installation log in $LOGFILE"
 
-    update_packages
+    #update_packages
 
     has_docker || ( \
-        ( is_kernel_more_recent_than $kver_required || handle_old_kernel ) && \
-        ( has_device_mapper || install_device_mapper ) && \
+        ( is_kernel_more_recent_than $kver_required || update_new_kernel ) && \
+    #    ( has_device_mapper || install_device_mapper ) && \
         ( has_epel || ( install_epel && update_package_cache ) ) && \
         install_docker \
         )
