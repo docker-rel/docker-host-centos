@@ -117,17 +117,26 @@ main() {
     echo "Installation log in $LOGFILE"
 
     #update_packages
+  
+  if ! has_docker ;then
+	if ! is_kernel_more_recent_than $kver_requreda ; then
+	handle_old_kernel
+	fi
+	disable_selinux
+	update_new_kernel
+  fi		
+ 	
 
-    has_docker || ( \
-        ( is_kernel_more_recent_than $kver_required || update_new_kernel ) && \
-    #    ( has_device_mapper || install_device_mapper ) && \
-        ( has_epel || ( install_epel && update_package_cache ) ) && \
-        install_docker \
-        )
+  if  ! has_epel ;then
+	if install_epel && update_package_cache; then
+	install_docker 
+	fi
+  fi
+        
 
-    is_docker_running || ( enable_docker && start_docker )
-
+  if  is_docker_running || ( enable_docker && start_docker ) ;then
     docker info || exit 1
+  fi
 }
 
 LOGFILE=/tmp/docker-install.log
