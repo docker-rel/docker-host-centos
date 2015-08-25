@@ -71,6 +71,7 @@ install_epel() {
     echo "Installing EPEL repo..."
     local epel_rpm="http://download.fedoraproject.org/pub/epel/6/x86_64/epel-release-6-8.noarch.rpm"
     rpm -ivh $epel_rpm > $LOGFILE 2>&1
+    return $?
 }
 
 update_package_cache() {
@@ -134,8 +135,10 @@ main() {
   fi
         
 
-  if  is_docker_running || ( enable_docker && start_docker ) ;then
-    docker info || exit 1
+  if  ! is_docker_running ;then
+	enable_docker 
+	start_docker 
+  	docker info 
   fi
 }
 
