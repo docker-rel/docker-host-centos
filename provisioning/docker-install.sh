@@ -119,7 +119,7 @@ main() {
 
     #update_packages
   
-  if [ has_docker ;then
+  if ! has_docker ;then
 	if ! is_kernel_more_recent_than $kver_requreda ; then
 	handle_old_kernel
 	fi
